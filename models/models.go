@@ -62,7 +62,7 @@ type Account struct {
 	branchID     int           `gorm:"not null"`
 	accountNo    string        `gorm:"type:varchar(50);unique;not null"`
 	balance      float64       `gorm:"type:decimal(14,2);default:0.00"`
-	account_type AccountType   `gorm:"type:varchar(7);default:'SAVINGS'"`
+	accountType  AccountType   `gorm:"type:varchar(7);default:'SAVINGS'"`
 	status       AccountStatus `gorm:"type:varchar(6);default:'ACTIVE'"`
 	createdAt    time.Time     `gorm:"default:CURRENT_TIMESTAMP"`
 	customer     Customer      `gorm:"foriegnKey:customerID"`
@@ -80,12 +80,44 @@ const (
 
 // Loan entity represents the loan availed by a customer
 type Loan struct {
-	LoanID int
+	loanID       int             `gorm:"primaryKey;autoIncrement"`
+	customerID   int             `gorm:"not null"`
+	branchID     int             `gorm:"not null"`
+	amount       float64         `gorm:"type:decimal(12,2);not null"`
+	interestRate float32         `gorm:"type:decimal(5,2);default:12.00"`
+	tenureMonths int             `gorm:"not null"`
+	disbursedAt  time.Time       `gorm:"default:CURRENT_TIMESTAMP"`
+	status       LoanStatus      `gorm:"type:varchar(15);default:'ACTIVE'"`
+	customer     Customer        `gorm:"foreignKey:customerID"`
+	branch       Branch          `gorm:"foreignKey:branchID"`
+	repayments   []LoanRepayment `gorm:"foreignKey:loanID"`
 }
+
+// Custom type for defining the type of transaction that would take place.
+type TransactionType string
+
+const (
+	TransactionTypeDeposit    TransactionType = "Deposit"
+	TransactionTypeWithdrawal TransactionType = "Withdrawal"
+)
 
 // Transaction entity represents the transaction performed by a customer
 type Transaction struct {
+	transactionID    int             `gorm:"primaryKey;autoIncrement"`
+	accountID        int             `gorm:"not null"`
+	transaction_type TransactionType `gorm:"type:varchar(20)"`
+	amount           float64         `gorm:"type:decimal(14,2)"`
+	descripton       string          `gorm:"type:text"`
+	createdAt        time.Time       `gorm:"default:CURRENT_TIMESTAMP"`
+	account          Account         `gorm:"foreignKey:accountID"`
 }
 
 type LoanRepayment struct {
+	repaymentID int       `gorm:"primaryKey;autoIncrement"`
+	loanID      int       `gorm:"not null"`
+	amount      float64   `gorm:"type:decimal(14,2);not null"`
+	principal   float64   `gorm:"type:decimal(14,2);not null"`
+	interest    float32   `gorm:"type:decimal(14,2);not null"`
+	paid_at     time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	loan        Loan      `gorm:"foreignKey:loanID"`
 }
